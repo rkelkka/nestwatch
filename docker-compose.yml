@@ -1,0 +1,31 @@
+services:
+  nestwatch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nestwatch-latest
+    ports:
+      - 5000:5000
+    environment:
+      #API_URL: http://ollama:11434/api/chat
+      API_URL: ${API_URL}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      MODEL: llava:7b
+      STREAM_PROCESS_INTERVAL: 60
+      STREAM_1_TITLE: Sääksilive 3
+      STREAM_1_URL: https://www.youtube.com/watch?v=8o2DMXynAxQ
+      STREAM_2_TITLE: Sääskilive 4
+      STREAM_2_URL: https://www.youtube.com/watch?v=lNh1DV9qupc
+      STREAM_3_TITLE: Dewey Beach Lions Club
+      STREAM_3_URL: https://www.youtube.com/watch?v=XTTKHKFDwOk
+
+  ollama:
+    container_name: ollama
+    image: ollama/ollama:latest
+    ports:
+      - 11434:11434
+    volumes:
+      - ./ollama:/root/.ollama
+    profiles:
+      - local_ollama
+
