@@ -11,13 +11,20 @@ services:
       API_URL: ${API_URL}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
       MODEL: llava:7b
+      PROMPT: This is a live image of an osprey nest. Look closely at the nest area. Are any birds currently present? Answer 'yes' or 'no'. If yes, briefly describe what the birds are doing (e.g., resting, feeding, flying in/out)
       STREAM_PROCESS_INTERVAL: 60
-      STREAM_1_TITLE: Sääksilive 3
-      STREAM_1_URL: https://www.youtube.com/watch?v=8o2DMXynAxQ
-      STREAM_2_TITLE: Sääskilive 4
-      STREAM_2_URL: https://www.youtube.com/watch?v=lNh1DV9qupc
-      STREAM_3_TITLE: Dewey Beach Lions Club
-      STREAM_3_URL: https://www.youtube.com/watch?v=XTTKHKFDwOk
+      STREAM_1_TITLE: Sääksi - WWF:n Luontolive 
+      STREAM_1_URL: https://www.youtube.com/watch?v=X2fPjEDeOos
+      STREAM_2_TITLE: Sääksilive 2 - Satakunnan sääkset
+      STREAM_2_URL: https://www.youtube.com/watch?v=GztQWijpWgA
+      STREAM_3_TITLE: Sääksilive 3 - Satakunnan sääkset
+      STREAM_3_URL: https://www.youtube.com/watch?v=8o2DMXynAxQ
+      STREAM_4_TITLE: Sääksilive 4 - Satakunnan sääkset
+      STREAM_4_URL: https://www.youtube.com/watch?v=lNh1DV9qupc
+      STREAM_5_TITLE: Sääksilive 5 - Satakunnan sääkset
+      STREAM_5_URL: https://www.youtube.com/watch?v=tvYjJYodx-Y
+      STREAM_6_TITLE: Dewey Beach Lions Club
+      STREAM_6_URL: https://www.youtube.com/watch?v=XTTKHKFDwOk
 
   ollama:
     container_name: ollama

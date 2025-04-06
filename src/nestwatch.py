@@ -19,6 +19,8 @@ def get_iso_timestamp():
 
 API_URL=os.getenv("API_URL")
 MODEL=os.getenv("MODEL")
+default_prompt="This is a live image of an osprey nest. Look closely at the nest area. Are any birds currently present? Answer 'yes' or 'no'. If yes, briefly describe what the birds are doing (e.g., resting, feeding, flying in/out)."
+PROMPT=os.getenv("PROMPT", default_prompt)
 STREAM_PROCESS_INTERVAL=int(os.getenv("STREAM_PROCESS_INTERVAL", 60))
 
 def setup_logger():
@@ -87,13 +89,14 @@ def img_to_base64(img):
 
 def query_llava(base64_image):
     url = API_URL
+    prompt = "This is a live image of an osprey nest. Look closely at the nest area. Are any birds currently present? Answer 'yes' or 'no'. If yes, briefly describe what the birds are doing (e.g., resting, feeding, flying in/out)."
     headers = {"Content-Type": "application/json"}
     payload = {
         "model": MODEL,
         "messages": [
             {
                 "role": "user",
-                "content": "Is there a bird in this image? Just answer 'Yes' or 'No'.",
+                "content": PROMPT,
                 "images": [base64_image]
             }
         ],
@@ -117,14 +120,15 @@ def query_llava(base64_image):
 # Process each stream and detect birds
 def process_stream(title, yt_url):
     # Initial random delay to distribute load
-    # time.sleep(random.randint(0, 10))
+    time.sleep(random.randint(0, 30))
     logger = logging.getLogger()
     url = get_stream_url(yt_url)
     while True:
         logger.info("Capturing frame...")
         ret, frame = capture_frame(url)
         if ret is None:
-            logger.info("No frame, break after 10s")
+            logger.info("No frame, attempt to refresh the url and break after 10s")
+            url = get_stream_url(yt_url)
             time.sleep(10)
             break;
         img = frame_to_img(frame)
@@ -151,7 +155,7 @@ def process_stream(title, yt_url):
 
         notify = bird_detected and not was_detected_previously
         if notify:
-            discord.postActivity(title, yt_url, img)
+            discord.postActivity(title, yt_url, img, answer)
 
         now_gone = was_detected_previously and not bird_detected
         if now_gone:
@@ -187,11 +191,16 @@ if __name__ == '__main__':
     
     load_streams()
     logger.info(f"Loaded streams {streams}")
+
+    stream_title_url_str = "\n".join(f"- {title}: {info['url']}" for title, info in streams.items())
+    logger.info(stream_title_url_str)
+    discord.postInit(stream_title_url_str, PROMPT)
+    time.sleep(5)
     
     # Start processing streams in background threads
     for title, stream_data in streams.items():
         Thread(target=process_stream, name=title, args=(title, stream_data["url"]), daemon=True).start()
     
     # Start Flask application
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
