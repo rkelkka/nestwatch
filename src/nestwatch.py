@@ -118,10 +118,10 @@ def query_llava(base64_image):
     return full_reply.strip()
 
 # Process each stream and detect birds
-def process_stream(title, yt_url):
-    # Initial random delay to distribute load
-    time.sleep(random.randint(0, 30))
+def process_stream(title, yt_url, start_delay):
     logger = logging.getLogger()
+    logger.info(f"Starting thread for stream {title} after initial delay of {start_delay}")
+    time.sleep(start_delay)
     url = get_stream_url(yt_url)
     while True:
         logger.info("Capturing frame...")
@@ -198,8 +198,11 @@ if __name__ == '__main__':
     time.sleep(5)
     
     # Start processing streams in background threads
-    for title, stream_data in streams.items():
-        Thread(target=process_stream, name=title, args=(title, stream_data["url"]), daemon=True).start()
+    num_threads = len(streams)
+    interval = STREAM_PROCESS_INTERVAL
+    for index, (title, stream_data) in enumerate(streams.items()):
+        start_delay = index * (interval / num_threads)
+        Thread(target=process_stream, name=title, args=(title, stream_data["url"], start_delay), daemon=True).start()
     
     # Start Flask application
     app.run(debug=False, host="0.0.0.0", port=5000)
