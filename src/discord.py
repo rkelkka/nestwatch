@@ -15,10 +15,14 @@ def postActivity(stream_title, stream_url, frame_img, answer):
 
     webhook.add_file(file=frame_img, filename="captured.jpg")
 
-    desc = f"{answer}\n{stream_url}"
+    desc = f"{stream_url}"
 
-    embed = DiscordEmbed(title=f"Activity spotted at {stream_title}", description=desc , color="f3964a")
-    embed.set_thumbnail(url="attachment://captured.jpg")
+    embed = DiscordEmbed(title=f"Activity spotted at {stream_title}", description=desc, color="f3964a")
+    embed.set_timestamp()
+    embed.set_image(url="attachment://captured.jpg")
+    # footer does not render links..
+    embed.set_footer(answer)
+    embed.set_author(name=stream_title, url=stream_url)
 
     webhook.add_embed(embed)
     response = webhook.execute()
