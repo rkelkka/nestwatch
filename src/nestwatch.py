@@ -22,6 +22,7 @@ MODEL=os.getenv("MODEL")
 default_prompt="This is a live image of an osprey nest. Look closely at the nest area. Are any birds currently present? Answer 'yes' or 'no'. If yes, briefly describe what the birds are doing (e.g., resting, feeding, flying in/out)."
 PROMPT=os.getenv("PROMPT", default_prompt)
 STREAM_PROCESS_INTERVAL=int(os.getenv("STREAM_PROCESS_INTERVAL", 60))
+THREAD_DISTRIBUTION_INTERVAL=int(os.getenv("THREAD_DISTRIBUTION_INTERVAL", 60))
 
 def setup_logger():
     # Create a custom formatter that includes the thread name
@@ -199,7 +200,7 @@ if __name__ == '__main__':
     
     # Start processing streams in background threads
     num_threads = len(streams)
-    interval = STREAM_PROCESS_INTERVAL
+    interval = THREAD_DISTRIBUTION_INTERVAL
     for index, (title, stream_data) in enumerate(streams.items()):
         start_delay = index * (interval / num_threads)
         Thread(target=process_stream, name=title, args=(title, stream_data["url"], start_delay), daemon=True).start()
