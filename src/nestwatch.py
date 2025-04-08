@@ -155,7 +155,7 @@ def process_stream(title, yt_url, start_delay):
 
         notify = bird_detected and not was_detected_previously
         if notify:
-            discord.postActivity(title, yt_url, img, answer)
+            discord.postActivity(title, yt_url, img, answer, model)
 
         now_gone = was_detected_previously and not bird_detected
         if now_gone:
@@ -194,8 +194,8 @@ if __name__ == '__main__':
 
     stream_title_url_str = "\n".join(f"- {title}: {info['url']}" for title, info in streams.items())
     logger.info(stream_title_url_str)
-    discord.postInit(stream_title_url_str, PROMPT)
     time.sleep(5)
+    discord.postInit(stream_title_url_str, PROMPT, MODEL)
     
     # Start processing streams in background threads
     num_threads = len(streams)

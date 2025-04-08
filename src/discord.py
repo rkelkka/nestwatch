@@ -5,12 +5,12 @@ from discord_webhook.constants import MessageFlags
 
 DISCORD_WEBHOOK_URL=os.getenv("DISCORD_WEBHOOK_URL")
 
-def postInit(stream_title_url_str, prompt):
-    desc = f"Streams:\n{stream_title_url_str}\nPrompt: \"{prompt}\""
+def postInit(stream_title_url_str, prompt, model):
+    desc = f"Streams:\n{stream_title_url_str}\nModel: {model}\nPrompt: \"{prompt}\""
     webhook = DiscordWebhook(url=DISCORD_WEBHOOK_URL, content=desc, flags=MessageFlags.SUPPRESS_EMBEDS.value)
     response = webhook.execute()
 
-def postActivity(stream_title, stream_url, frame_img, answer):
+def postActivity(stream_title, stream_url, frame_img, answer, model):
     webhook = DiscordWebhook(url=DISCORD_WEBHOOK_URL)
 
     webhook.add_file(file=frame_img, filename="captured.jpg")
@@ -21,7 +21,7 @@ def postActivity(stream_title, stream_url, frame_img, answer):
     embed.set_timestamp()
     embed.set_image(url="attachment://captured.jpg")
     # footer does not render links..
-    embed.set_footer(answer)
+    embed.set_footer(f"{answer}|{model}")
     embed.set_author(name=stream_title, url=stream_url)
 
     webhook.add_embed(embed)
