@@ -21,7 +21,7 @@ def postActivity(stream_title, stream_url, frame_img, answer, model):
     embed.set_timestamp()
     embed.set_image(url="attachment://captured.jpg")
     # footer does not render links..
-    embed.set_footer(f"{answer}|{model}")
+    embed.set_footer(f"{answer} ({model})")
     embed.set_author(name=stream_title, url=stream_url)
 
     webhook.add_embed(embed)
@@ -31,6 +31,10 @@ def postGone(stream_title):
     webhook = DiscordWebhook(url=DISCORD_WEBHOOK_URL, content=f"{stream_title} nest is now empty :empty_nest:")
     response = webhook.execute()
 
+def postError(stream_title, e):
+    e_str = str(e)
+    webhook = DiscordWebhook(url=DISCORD_WEBHOOK_URL, content=f":warning: {stream_title} {e_str}")
+    response = webhook.execute()
 
 #if __name__ == '__main__':
 #    with open("osprey.jpg", "rb") as f:

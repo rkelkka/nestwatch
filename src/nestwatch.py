@@ -14,6 +14,10 @@ from datetime import datetime, timezone
 import discord
 import random
 
+class StreamCaptureException(Exception):
+    """Raise for stream capture specific exception"""
+
+
 def get_iso_timestamp():
     return datetime.now(timezone.utc).isoformat()
 
@@ -119,51 +123,65 @@ def query_llava(base64_image):
     return full_reply.strip()
 
 # Process each stream and detect birds
-def process_stream(title, yt_url, start_delay):
+def launch_process_stream(title, yt_url, start_delay, process_interval):
     logger = logging.getLogger()
     logger.info(f"Starting thread for stream {title} after initial delay of {start_delay}")
     time.sleep(start_delay)
     url = get_stream_url(yt_url)
-    while True:
-        logger.info("Capturing frame...")
-        ret, frame = capture_frame(url)
-        if ret is None:
-            logger.info("No frame, attempt to refresh the url and break after 10s")
-            url = get_stream_url(yt_url)
-            time.sleep(10)
-            break;
-        img = frame_to_img(frame)
-        frame_base64 = img_to_base64(img)
-        logger.info("Querying LLaVA API...")
-        answer = query_llava(frame_base64)
-        logger.info(f"LLaVA response: {answer}")
-        bird_detected = "Yes" in answer
-        
-        s=streams[title]
-        was_detected_previously = s['bird_detected']
-        s['bird_detected'] = bird_detected
-        
-        if bird_detected:
-            logger.info("******* BIRD DETECTED YAY *********")
-            ts = get_iso_timestamp()
-            s['captured_frame'] = frame_base64
-            s['captured_time'] = ts
-            s['last_bird_captured_frame'] = frame_base64
-            s['last_bird_captured_time'] = ts
-        else:
-            s['captured_frame'] = None
-            s['captured_time'] = None
+    error_count = 0
+    while error_count < 5:
+        try:
+                process_stream(title, yt_url, url)
+                error_count = 0
+                time.sleep(process_interval)
+        except StreamCaptureException as e:
+                error_count += 1
+                logger.exception(e)
+                discord.postError(title, e)
+                logger.error("Refresh url from yt_url")
+                url = get_stream_url(yt_url)
+                time.sleep(60)
+        except Exception as e:
+                error_count += 1
+                logger.exception(e)
+                discord.postError(title, e)
+                time.sleep(60)
+    logger.info(f"Giving up after {error_count} errors")
 
-        notify = bird_detected and not was_detected_previously
-        if notify:
-            discord.postActivity(title, yt_url, img, answer, model)
+def process_stream(title, yt_url, url):
+    logger.info("Capturing frame...")
+    ret, frame = capture_frame(url)
+    if ret is None:
+        raise Exception("Unable to capture frame from the url")
 
-        now_gone = was_detected_previously and not bird_detected
-        if now_gone:
-            discord.postGone(title)
+    img = frame_to_img(frame)
+    frame_base64 = img_to_base64(img)
+    logger.info(f"Querying Ollama API using {MODEL}...")
+    answer = query_llava(frame_base64)
+    logger.info(f"Ollama response: {answer}")
+    bird_detected = "Yes" in answer
         
-        # Sleep for a small time to simulate processing delay (adjust as needed)
-        time.sleep(STREAM_PROCESS_INTERVAL)
+    s=streams[title]
+    was_detected_previously = s['bird_detected']
+    s['bird_detected'] = bird_detected
+
+    if bird_detected:
+        logger.info("******* BIRD DETECTED YAY *********")
+        ts = get_iso_timestamp()
+        s['captured_frame'] = frame_base64
+        s['captured_time'] = ts
+        s['last_bird_captured_frame'] = frame_base64
+        s['last_bird_captured_time'] = ts
+    else:
+        s['captured_frame'] = None
+        s['captured_time'] = None
+    notify = bird_detected and not was_detected_previously
+    if notify:
+        discord.postActivity(title, yt_url, img, answer, MODEL)
+
+    now_gone = was_detected_previously and not bird_detected
+    if now_gone:
+        discord.postGone(title)
 
 # API to check which streams have detected birds
 @app.route('/check', methods=['GET'])
@@ -204,7 +222,7 @@ if __name__ == '__main__':
     interval = THREAD_DISTRIBUTION_INTERVAL
     for index, (title, stream_data) in enumerate(streams.items()):
         start_delay = index * (interval / num_threads)
-        Thread(target=process_stream, name=title, args=(title, stream_data["url"], start_delay), daemon=True).start()
+        Thread(target=launch_process_stream, name=title, args=(title, stream_data["url"], start_delay, STREAM_PROCESS_INTERVAL), daemon=True).start()
     
     # Start Flask application
     app.run(debug=False, host="0.0.0.0", port=5000)
