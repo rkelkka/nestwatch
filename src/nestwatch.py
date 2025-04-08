@@ -195,7 +195,8 @@ if __name__ == '__main__':
 
     stream_title_url_str = "\n".join(f"- {title}: {info['url']}" for title, info in streams.items())
     logger.info(stream_title_url_str)
-    time.sleep(5)
+    logger.info(MODEL)
+    logger.info(PROMPT)
     discord.postInit(stream_title_url_str, PROMPT, MODEL)
     
     # Start processing streams in background threads
