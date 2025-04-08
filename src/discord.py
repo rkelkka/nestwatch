@@ -6,7 +6,7 @@ from discord_webhook.constants import MessageFlags
 DISCORD_WEBHOOK_URL=os.getenv("DISCORD_WEBHOOK_URL")
 
 def postInit(stream_title_url_str, prompt, model):
-    desc = f"Streams:\n{stream_title_url_str}\nModel: {model}\nPrompt: \"{prompt}\""
+    desc = f"Streams:\n{stream_title_url_str}\nModel: **{model}**\nPrompt: *\"{prompt}\"*"
     webhook = DiscordWebhook(url=DISCORD_WEBHOOK_URL, content=desc, flags=MessageFlags.SUPPRESS_EMBEDS.value)
     response = webhook.execute()
 
